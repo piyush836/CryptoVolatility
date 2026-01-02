@@ -1,0 +1,7 @@
+data:
+  symbol : "BTC-USD"
+  start_date: "2020-01-01"
+  end_date: "2025-12-27"
+  interval: "1d"
+  limit: 1000
+  
