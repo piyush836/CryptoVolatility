@@ -22,7 +22,7 @@ Predicting 15-day future volatility of Bitcoin using causal machine learning and
 ## 🎯 Goal
 Forecast **annualized 15-day Bitcoin volatility** using only historical data — with **no future leakage** — to support risk-aware trading and portfolio management.
 
->## Key Insights
+## Key Insights
 
 - The Naïve model outperformed XGBoost and GARCH, suggesting persistence in short-term volatility.
 - This indicates that simple baselines can be strong benchmarks in financial time series forecasting.
