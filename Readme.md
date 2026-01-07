@@ -170,3 +170,12 @@ While RMSE provides a clear measure of average forecast error, it does not captu
 The system ingests historical cryptocurrency price data, performs cleaning and feature engineering to estimate volatility-related signals, applies forecasting models on strictly past data, and evaluates predictions using forward-looking test windows to support risk-aware decision making.
 The volatility forecast would be exposed through a simple API endpoint that returns the predicted 15-day volatility percentage for a given cryptocurrency symbol, allowing downstream applications or dashboards to consume the output programmatically.
 In production, the pipeline would run on a scheduled basis to ingest new market data, update volatility features, and refresh forecasts. The API service could be deployed on a cloud virtual machine or managed platform, with model artifacts and logs stored centrally for monitoring and retraining.
+
+## Cloud Services Mapping
+
+### Azure (Conceptual)
+
+- **Azure Virtual Machines** – Host the API service that serves volatility forecasts.
+- **Azure Blob Storage** – Store historical price data, model artifacts, and logs.
+- **Azure Logic Apps / Scheduled Jobs** – Trigger periodic data ingestion and model updates.
+The system design is cloud-agnostic, allowing the same pipeline and services to be deployed on either AWS or Azure with minimal changes.
