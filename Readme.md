@@ -64,6 +64,50 @@ Forecast **annualized 15-day Bitcoin volatility** using only historical data —
 
 The following SQL queries illustrate how volatility-related features could be extracted from a relational database before modeling.
 
+# 1. Fetch historical BTC prices
+
+```sql
+SELECT timestamp, close_price
+FROM crypto_prices
+WHERE symbol = 'BTC'
+ORDER BY timestamp;
+
+# 2. Calculate daily returns
+
+```sql
+SELECT
+    timestamp,
+    (close_price - LAG(close_price) OVER (ORDER BY timestamp)) /
+     LAG(close_price) OVER (ORDER BY timestamp) AS daily_return
+FROM crypto_prices
+WHERE symbol = 'BTC';
+
+### 3. Calculate 15-day rolling volatility
+
+```sql
+SELECT
+    timestamp,
+    STDDEV(daily_return) OVER (
+        ORDER BY timestamp
+        ROWS BETWEEN 14 PRECEDING AND CURRENT ROW
+    ) AS rolling_volatility_15d
+FROM (
+    SELECT
+        timestamp,
+        (close_price - LAG(close_price) OVER (ORDER BY timestamp)) /
+         LAG(close_price) OVER (ORDER BY timestamp) AS daily_return
+    FROM crypto_prices
+    WHERE symbol = 'BTC'
+) t;
+
+### 4. Select training data (no future leakage)
+
+```sql
+SELECT *
+FROM crypto_prices
+WHERE symbol = 'BTC'
+AND timestamp <= '2025-11-30';
+```
 ## Assumptions
 
 - Future price behavior is suitable for statistical forecasting.
