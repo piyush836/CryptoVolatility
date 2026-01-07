@@ -120,4 +120,18 @@ AND timestamp <= '2025-11-30';
 - Add macroeconomic features.
 - Deploy a simple API.
 
+## SQL vs Pandas for Feature Engineering
+
+SQL is used for filtering, aggregations, and window-based computations directly on stored data, reducing data transfer and ensuring consistent feature extraction across systems. Pandas is then used for more flexible transformations, exploratory analysis, and modeling workflows once the required features are extracted.
+
+**Used SQL for:**
+- Filtering historical BTC data by time range
+- Computing daily returns
+- Calculating rolling 15-day volatility
+- Enforcing train/test split without future leakage
+
+**Used pandas for:**
+- Exploratory data analysis and visualization
+- Feature inspection and validation
+- Model training and evaluation
 
