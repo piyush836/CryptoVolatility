@@ -147,3 +147,15 @@ Volatility measures the magnitude of price fluctuations rather than direction. I
 **Leakage prevention:**
 All features are computed strictly using historical data up to each timestamp. Rolling statistics are calculated using backward-looking windows only, ensuring that no future information is used in training or evaluation.
 
+## Model Selection Rationale
+
+Multiple models were evaluated to understand how different assumptions and levels of complexity affect volatility forecasting performance. Simple baselines establish reference performance, while more complex models test whether additional structure improves predictive accuracy.
+
+**Models evaluated:**
+- **Naïve volatility model** – serves as a strong baseline by assuming recent volatility persists into the near future.
+- **GARCH** – captures volatility clustering and time-varying variance common in financial time series.
+- **XGBoost** – tests whether nonlinear relationships in engineered features improve volatility prediction.
+
+**Key learning:**
+Model performance showed that simple baselines can outperform more complex models for short-horizon volatility forecasting. This suggests strong persistence in recent volatility and highlights the importance of benchmarking against simple methods before adopting higher-complexity models.
+
