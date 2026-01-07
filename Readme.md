@@ -60,6 +60,10 @@ Forecast **annualized 15-day Bitcoin volatility** using only historical data —
 5. Evaluation
 6. Insights/Output
 
+## SQL Feature Extraction (Conceptual)
+
+The following SQL queries illustrate how volatility-related features could be extracted from a relational database before modeling.
+
 ## Assumptions
 
 - Future price behavior is suitable for statistical forecasting.
