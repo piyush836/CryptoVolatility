@@ -159,3 +159,9 @@ Multiple models were evaluated to understand how different assumptions and level
 **Key learning:**
 Model performance showed that simple baselines can outperform more complex models for short-horizon volatility forecasting. This suggests strong persistence in recent volatility and highlights the importance of benchmarking against simple methods before adopting higher-complexity models.
 
+## Evaluation Strategy
+
+RMSE was used to evaluate volatility forecasts because it penalizes larger prediction errors more strongly, which is important in risk-sensitive applications where underestimating or overestimating volatility can have significant consequences.
+Lower RMSE indicates more reliable volatility estimates, which helps traders make better risk management decisions such as position sizing, stop-loss placement, and capital allocation under uncertain market conditions.
+While RMSE provides a clear measure of average forecast error, it does not capture directional bias or tail risk, which are also important considerations in highly volatile markets.
+
