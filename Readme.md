@@ -165,3 +165,8 @@ RMSE was used to evaluate volatility forecasts because it penalizes larger predi
 Lower RMSE indicates more reliable volatility estimates, which helps traders make better risk management decisions such as position sizing, stop-loss placement, and capital allocation under uncertain market conditions.
 While RMSE provides a clear measure of average forecast error, it does not capture directional bias or tail risk, which are also important considerations in highly volatile markets.
 
+## End-to-End Pipeline Overview
+
+The system ingests historical cryptocurrency price data, performs cleaning and feature engineering to estimate volatility-related signals, applies forecasting models on strictly past data, and evaluates predictions using forward-looking test windows to support risk-aware decision making.
+The volatility forecast would be exposed through a simple API endpoint that returns the predicted 15-day volatility percentage for a given cryptocurrency symbol, allowing downstream applications or dashboards to consume the output programmatically.
+In production, the pipeline would run on a scheduled basis to ingest new market data, update volatility features, and refresh forecasts. The API service could be deployed on a cloud virtual machine or managed platform, with model artifacts and logs stored centrally for monitoring and retraining.
