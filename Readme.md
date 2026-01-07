@@ -135,3 +135,15 @@ SQL is used for filtering, aggregations, and window-based computations directly 
 - Feature inspection and validation
 - Model training and evaluation
 
+## Volatility Feature Intuition
+
+Volatility measures the magnitude of price fluctuations rather than direction. It is primarily driven by the size and frequency of returns over time. Features based on historical returns help capture recent market uncertainty and risk.
+
+**Key volatility features:**
+- **Log returns** – capture percentage price changes and normalize scale.
+- **Rolling standard deviation of returns** – measures recent variability in price movements.
+- **High–low price range** – reflects intraday price dispersion and market stress.
+
+**Leakage prevention:**
+All features are computed strictly using historical data up to each timestamp. Rolling statistics are calculated using backward-looking windows only, ensuring that no future information is used in training or evaluation.
+
