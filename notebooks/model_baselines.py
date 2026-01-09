@@ -35,7 +35,8 @@ class ModelBaselines:
         try:
             y_pred_naive=X_test['past_vol_15']
             rmse_naive=np.sqrt(mean_squared_error(y_test,y_pred_naive))
-            print('RMSE Naive Forecast:',rmse_naive)
+            logging.info("RMSE Naive Forecast: %.4f", rmse_naive)
+
             return rmse_naive
         except Exception as e:
             raise CryptoException(str(e),sys)
@@ -45,14 +46,20 @@ class ModelBaselines:
             model.fit(X_train,y_train)
             y_pred_xgb=model.predict(X_test)
             rmse_xgb=np.sqrt(mean_squared_error(y_test,y_pred_xgb))
-            print('RMSE XGBOOST Forecast:',rmse_xgb)
+            logging.info("RMSE XGBOOST Forecast: %.4f", rmse_xgb)
            
             return rmse_xgb,model
            
         except Exception as e:
             raise CryptoException(str(e),sys)
     def GARCH_Forcast(self, df: pd.DataFrame):
+        # NOTE:
+        # GARCH volatility is evaluated using in-sample conditional variance
+        # and is not directly comparable to forward-looking ML forecasts.
+        # Results are reported for reference only.
+
         try:
+
             # Train on 2020-2023 log returns
             train_end = '2023-12-31'
             train_returns = df[df.index <= train_end]['log_return'].dropna()
@@ -73,7 +80,7 @@ class ModelBaselines:
             # Remove NaN
             valid = y_pred_garch.notna() & y_true_garch.notna()
             rmse_garch = np.sqrt(mean_squared_error(y_true_garch[valid], y_pred_garch[valid]))
-            print('RMSE GARCH Forecast:', rmse_garch)
+            logging.info("RMSE GARCH Forecast: %.4f", rmse_garch)
             return rmse_garch
             
         except Exception as e:
@@ -85,7 +92,10 @@ class ModelBaselines:
             rmse_naive = self.Niive_Forcast(X_test, y_test)
             rmse_xgb, xgb_model = self.XGBOOST_Forcast(X_train, y_train, X_test, y_test)
             rmse_garch = self.GARCH_Forcast(df)
-            feature_cols=['past_vol_15','volume_avg_30','high_low_ratio_5','past_return_7']
+            feature_cols=['past_vol_15',
+                          'volume_avg_30',
+                          'high_low_ratio_5',
+                          'past_return_7']
             feat_imp=pd.Series(xgb_model.feature_importances_,index=feature_cols).sort_values(ascending=False)
             plt.figure(figsize=(10,6))
             feat_imp.plot(kind='bar')

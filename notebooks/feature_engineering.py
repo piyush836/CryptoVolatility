@@ -3,6 +3,9 @@ from notebooks.exception.Exception import CryptoException
 import pandas as pd
 import numpy as np
 import sys
+from pathlib import Path
+
+
 class FeatureEngineering:
     
         
@@ -11,7 +14,8 @@ class FeatureEngineering:
         try:
             
             #load data
-            file_path='E:/CryptoVolatility/data/raw_data/raw_data.csv'
+            BASE_DIR = Path(__file__).resolve().parents[2]
+            file_path = BASE_DIR / "data" / "raw_data" / "raw_data.csv"
             rdata: pd.DataFrame = pd.read_csv(file_path)
                 # Must have 'Date' column
             if 'Date' not in rdata.columns:
@@ -43,7 +47,10 @@ class FeatureEngineering:
             
             # 1. Create log_return FIRST
             df['log_return'] = np.log(df['Close'] / df['Close'].shift(1))
-            print('close, log returns head:\n', df[['Close', 'log_return']].head())
+            logging.info(
+                "Log return preview:\n%s",
+                df[['Close', 'log_return']].head().to_string()
+            )
             logging.info("Log returns computed successfully")
             
             # 2. Compute features using df (not df_clean!)
@@ -51,6 +58,7 @@ class FeatureEngineering:
             
             # 3. Compute target volatility
             logging.info("computing target volatility")
+            # Target: annualized volatility over the next 15 trading days
             df['future_vol'] = df['log_return'].rolling(window=15).std().shift(-15)
             df['target_volatility'] = df['future_vol'] * np.sqrt(252)
             
@@ -64,6 +72,9 @@ class FeatureEngineering:
             feature_cols = ['past_vol_15', 'volume_avg_30', 'high_low_ratio_5', 'past_return_7']
             df_final = df.dropna(subset=feature_cols + ['target_volatility'])
             
+            
+            
+
             logging.info("Lagged features created successfully")
             return df_final
             
