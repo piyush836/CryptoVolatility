@@ -18,10 +18,35 @@ introduced additional variance without sufficient new signal.
 
 
 """
-GARCH Interpretation (Day 12)
+GARCH Interpretation 
 
 GARCH models estimate conditional volatility under strong parametric assumptions
 and are better suited for modeling volatility dynamics rather than direct
 forward-looking forecasts. In this setup, the mismatch between in-sample
 conditional variance and the future volatility target led to weaker performance.
+"""
+
+"""
+Failure Scenarios 
+
+Volatility forecasts are less reliable during sudden regime changes such as
+market crashes, major macroeconomic events, or unexpected news, where historical
+patterns break down and recent volatility is no longer representative.
+"""
+
+"""
+Failure Detection 
+
+Model failure can be detected by monitoring forecast errors over time.
+Sustained increases in RMSE or large deviations between predicted and realized
+volatility may indicate regime changes that require model retraining or review.
+"""
+
+"""
+Mitigation Strategies 
+
+To mitigate model failure, the system can retrain models on more recent data,
+shorten the forecasting horizon, or fall back to simpler baselines during periods
+of extreme uncertainty. Incorporating regime detection or external signals may
+also improve robustness.
 """
