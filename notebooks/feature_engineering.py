@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import sys
 from pathlib import Path
+from src.data_loader import DataLoader
 
 
 class FeatureEngineering:
@@ -11,33 +12,32 @@ class FeatureEngineering:
         
     
     def load_raw_data(self):
+        """Load raw CSV data"""
         try:
+            # Simple path - works when running from project root
+            file_path = "data/raw_data/raw_data.csv"
             
-            #load data
-            BASE_DIR = Path(__file__).resolve().parents[2]
-            file_path = BASE_DIR / "data" / "raw_data" / "raw_data.csv"
-            rdata: pd.DataFrame = pd.read_csv(file_path)
-                # Must have 'Date' column
+            rdata = pd.read_csv(file_path)
+            logging.info(f"✅ Loaded {len(rdata)} rows from {file_path}")
+            
+            # Must have 'Date' column
             if 'Date' not in rdata.columns:
                 raise ValueError(f"'Date' column missing. Available: {list(rdata.columns)}")
-        
-                # Convert and set index
+            
+            # Convert and set index
             rdata['Date'] = pd.to_datetime(rdata['Date'])
             rdata.set_index('Date', inplace=True)
-                # Ensure UTC timezone
-            if isinstance(rdata.index, pd.DatetimeIndex):
-                    
-                if rdata.index.tz is None:
-                    rdata.index = rdata.index.tz_localize('UTC')
-                else:
-                    rdata.index = rdata.index.tz_convert('UTC')
+            
+            # Ensure UTC timezone
+            if rdata.index.tz is None:
+                rdata.index = rdata.index.tz_localize('UTC')
             else:
-                # coerce index to datetime then localize to UTC
-                rdata.index = pd.to_datetime(rdata.index).tz_localize('UTC')
-        
+                rdata.index = rdata.index.tz_convert('UTC')
+            
             return rdata
+            
         except Exception as e:
-            raise CryptoException(str(e),sys)
+            raise CryptoException(str(e), sys)
 
     def Compute_log_Returns(self, df: pd.DataFrame) -> pd.DataFrame:
         try:
@@ -84,6 +84,9 @@ class FeatureEngineering:
 
     def initiate_feature_engineering(self):
         try:
+            logging.info("Initiating feature engineering")
+            loader=DataLoader()
+            loader.initiateDataloader()
             df=self.load_raw_data()
             df_final=self.Compute_log_Returns(df)
             return df_final

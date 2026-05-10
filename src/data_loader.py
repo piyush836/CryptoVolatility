@@ -44,6 +44,7 @@ class DataLoader:
                     
 
             #save to csv
+            os.makedirs('data/raw_data', exist_ok=True)
             
             btc.to_csv(os.path.join('data/raw_data','raw_data.csv'),index=False)
             logging.info("Data downloaded and saved successfully")
