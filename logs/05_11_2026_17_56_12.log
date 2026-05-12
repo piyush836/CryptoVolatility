@@ -1,0 +1,8 @@
+2026-05-11-17:56:18 - 97 - werkzeug - WARNING -  * Debugger is active!
+2026-05-11-17:56:18 - 97 - werkzeug - INFO -  * Debugger PIN: 121-249-646
+2026-05-11-17:59:47 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 17:59:47] "GET /health HTTP/1.1" 200 -
+2026-05-11-17:59:53 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 17:59:53] "GET / HTTP/1.1" 200 -
+2026-05-11-18:00:02 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 18:00:02] "GET /about HTTP/1.1" 200 -
+2026-05-11-18:00:09 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 18:00:09] "GET / HTTP/1.1" 200 -
+2026-05-11-18:00:26 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 18:00:26] "GET / HTTP/1.1" 200 -
+2026-05-11-18:02:28 - 97 - werkzeug - INFO -  * Detected change in 'E:\\CryptoVolatility\\src\\advanced_app.py', reloading

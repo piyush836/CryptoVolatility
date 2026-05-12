@@ -1,0 +1,4 @@
+2026-05-11-17:36:21 - 97 - werkzeug - WARNING -  * Debugger is active!
+2026-05-11-17:36:21 - 97 - werkzeug - INFO -  * Debugger PIN: 121-249-646
+2026-05-11-17:36:30 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 17:36:30] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2026-05-11-17:36:33 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 17:36:33] "[35m[1mGET / HTTP/1.1[0m" 500 -

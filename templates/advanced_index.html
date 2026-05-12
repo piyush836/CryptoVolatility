@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Volatility Forecaster</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea; --success: #28a745; --warning: #ffc107; 
+            --danger: #dc3545; --dark: #343a40; --light: #f8f9fa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #333; line-height: 1.5; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: var(--primary); margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 1.1em; }
+        
+        .controls { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
+        .control-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 15px; }
+        label { font-weight: 600; color: #555; min-width: 80px; }
+        select, .horizon-btn { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        .horizon-btn { background: white; cursor: pointer; transition: all 0.2s; }
+        .horizon-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        #predict-btn { background: var(--primary); color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        #predict-btn:hover { background: #5a67d8; }
+        #predict-btn:disabled { background: #a0aec0; cursor: not-allowed; }
+
+        .results { display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; }
+        .results.visible { display: block; }
+        .forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .metric-card { background: var(--light); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); }
+        .metric-card.risk-low { border-left-color: var(--success); }
+        .metric-card.risk-medium { border-left-color: var(--warning); }
+        .metric-card.risk-high { border-left-color: #fd7e14; }
+        .metric-card.risk-very_high { border-left-color: var(--danger); }
+        .metric-label { font-size: 0.85em; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-value { font-size: 1.4em; font-weight: 700; margin-top: 4px; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+        .badge.increasing { background: #fee2e2; color: #b91c1c; }
+        .badge.decreasing { background: #d1fae5; color: #065f46; }
+        .badge.stable { background: #e0e7ff; color: #3730a3; }
+
+        .chart-container { position: relative; height: 300px; margin-top: 20px; }
+        .loading { text-align: center; padding: 20px; color: #666; display: none; }
+        .loading.visible { display: block; }
+        .error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-top: 10px; display: none; }
+        .error.visible { display: block; }
+        
+        footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.9em; }
+        @media (max-width: 600px) {
+            .control-row { flex-direction: column; align-items: stretch; }
+            label { margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Crypto Volatility Forecaster</h1>
+            <p class="subtitle">Select a coin & horizon to predict 15-day annualized volatility</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-row">
+                <label for="coin-select">Coin:</label>
+                <select id="coin-select">
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="SOL">Solana (SOL)</option>
+                    <option value="XRP">Ripple (XRP)</option>
+                    <option value="ADA">Cardano (ADA)</option>
+                    <option value="DOGE">Dogecoin (DOGE)</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <label>Horizon:</label>
+                <button class="horizon-btn active" data-days="15">15 Days</button>
+                <button class="horizon-btn" data-days="7">7 Days</button>
+                <button class="horizon-btn" data-days="30">30 Days</button>
+                <button class="horizon-btn" data-days="60">60 Days</button>
+            </div>
+            <button id="predict-btn">🔮 Predict Volatility</button>
+            <div id="error-box" class="error"></div>
+        </div>
+
+        <div id="loading" class="loading">⏳ Fetching market data & calculating forecast...</div>
+
+        <div id="results" class="results">
+            <h2 style="margin-bottom: 15px; color: #333;">📈 Forecast Results</h2>
+            <div class="forecast-grid" id="metrics-grid"></div>
+            <div class="chart-container">
+                <canvas id="volatilityChart"></canvas>
+            </div>
+        </div>
+
+        <footer>
+            Built with Flask • yfinance • Chart.js • Naïve Persistence Baseline
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let chartInstance = null;
+        let selectedHorizon = 15;
+
+        // Horizon buttons
+        document.querySelectorAll('.horizon-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedHorizon = parseInt(btn.dataset.days);
+            });
+        });
+
+        // Predict button
+        document.getElementById('predict-btn').addEventListener('click', async () => {
+            const coin = document.getElementById('coin-select').value;
+            const errorBox = document.getElementById('error-box');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            errorBox.classList.remove('visible');
+            loading.classList.add('visible');
+            results.classList.remove('visible');
+            document.getElementById('predict-btn').disabled = true;
+
+            try {
+                // 1. Fetch Forecast
+                const forecastRes = await fetch(`${API_BASE}/api/forecast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coins: [coin], horizon: selectedHorizon })
+                });
+                const forecastData = await forecastRes.json();
+                
+                if (forecastData.status !== 'success' || !forecastData.forecasts[coin]?.success) {
+                    throw new Error(forecastData.forecasts[coin]?.error || 'Forecast failed');
+                }
+
+                // 2. Fetch Chart Data
+                const chartRes = await fetch(`${API_BASE}/api/chart-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ coin, days: 120 })
+                });
+                const chartData = await chartRes.json();
+                if (chartData.error) throw new Error(chartData.error);
+
+                renderResults(forecastData.forecasts[coin]);
+                renderChart(chartData.data, coin);
+                results.classList.add('visible');
+            } catch (err) {
+                errorBox.textContent = `❌ ${err.message}`;
+                errorBox.classList.add('visible');
+            } finally {
+                loading.classList.remove('visible');
+                document.getElementById('predict-btn').disabled = false;
+            }
+        });
+
+        function renderResults(forecast) {
+            const grid = document.getElementById('metrics-grid');
+            const riskClass = `risk-${forecast.risk_level}`;
+            grid.innerHTML = `
+                <div class="metric-card ${riskClass}">
+                    <div class="metric-label">Forecasted Volatility</div>
+                    <div class="metric-value">${forecast.forecast_vol}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Current Volatility</div>
+                    <div class="metric-value">${forecast.current_vol}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Trend</div>
+                    <div class="metric-value"><span class="badge ${forecast.trend}">${forecast.trend.toUpperCase()}</span></div>
+                </div>
+                <div class="metric-card ${riskClass}">
+                    <div class="metric-label">Risk Level</div>
+                    <div class="metric-value" style="text-transform: capitalize;">${forecast.risk_level.replace('_', ' ')}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Latest Price</div>
+                    <div class="metric-value">$${forecast.latest_price.toLocaleString()}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Forecast Date</div>
+                    <div class="metric-value">${forecast.latest_date}</div>
+                </div>
+            `;
+        }
+
+        function renderChart(data, coin) {
+            const ctx = document.getElementById('volatilityChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates.slice(-60),
+                    datasets: [
+                        {
+                            label: `${coin} Price ($)`,
+                            data: data.prices.slice(-60),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            yAxisID: 'y',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Annualized Volatility (%)',
+                            data: data.volatility.slice(-60),
+                            borderColor: '#dc3545',
+                            borderDash: [5, 5],
+                            yAxisID: 'y1',
+                            tension: 0.3,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Price ($)' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Volatility (%)' }, grid: { drawOnChartArea: false } }
+                    },
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
