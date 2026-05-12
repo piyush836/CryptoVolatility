@@ -1,181 +1,79 @@
-# 📈 CryptoVolatility: Bitcoin Volatility Forecasting
+# 📈 Crypto Volatility Forecasting
 
-Predicting 15-day future volatility of Bitcoin using causal machine learning and financial econometrics.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-active-brightgreen)
+**Predict Bitcoin volatility 15 days ahead using time-series ML and financial econometrics.**
 
-## Project Overview
+## 🎯 Problem
 
-**Problem**: Forecast 15-day future volatility of Bitcoin price to support trading and risk decisions.
+Bitcoin traders need reliable volatility forecasts to manage risk. This project forecasts 15-day annualized volatility using historical price data and machine learning.
 
-**Who cares**: Traders, risk analysts, quant researchers.
+**Example**: On Dec 11, 2025, the model forecasted **37.62% volatility** — useful for options traders, portfolio managers, and risk analysts.
 
-**Data Source**: Historical BTC price data from Yahoo Finance CSVs.
+---
 
-**Final Output**: Numeric volatility forecast (percentage) and comparison to baseline models.
+## 🏆 Results
 
-**Where this fits**: This project covers data ingestion, feature engineering, modeling, and evaluation stages of a DS pipeline.
+| Model | RMSE | Status |
+|-------|------|--------|
+| **Naïve Volatility Persistence** | **0.1604** | ✅ **Best** |
+| XGBoost | 0.3139 | Overfit |
+| GARCH | 5.5352 | Misaligned |
 
+### Key Finding
+**Short-horizon volatility exhibits strong persistence.** Recent volatility is the best predictor of near-term volatility. This simple baseline beats complex models because:
+- ML models overfit on engineered features
+- GARCH assumes specific distributional assumptions that don't hold
+- Market microstructure means yesterday's vol = today's vol (inertia)
 
-## 🎯 Goal
-Forecast **annualized 15-day Bitcoin volatility** using only historical data — with **no future leakage** — to support risk-aware trading and portfolio management.
+---
 
-## Key Insights
+## 🛠 Tech Stack
 
-- The Naïve model outperformed XGBoost and GARCH, suggesting persistence in short-term volatility.
-- This indicates that simple baselines can be strong benchmarks in financial time series forecasting.
+- **Data**: yfinance (Yahoo Finance API)
+- **Feature Engineering**: pandas, numpy
+- **ML Models**: scikit-learn, XGBoost, ARCH (GARCH)
+- **Evaluation**: sklearn.metrics
+- **Visualization**: matplotlib
+- **API**: Flask (optional deployment)
+- **Containerization**: Docker (optional)
 
-## 📊 Results (as of Jan 2026)
-| Model          | RMSE     | Performance |
-|----------------|----------|-------------|
-| **Naïve**      | 0.1604   | ✅ Best     |
-| XGBoost        | 0.3139   | ❌ Worse    |
-| GARCH          | 5.5352   | ❌ Misaligned |
+---
 
-✅ **Real-world validation**:  
-- Forecast on **2025-12-11**: **37.62%**  
-- Actual (Dec 12–26): **22.97%**  
-- Interpretation: Model correctly sensed elevated risk, though market calmed faster than expected.
+## 📦 Installation & Setup
 
-## 🧠 Features
-- ✅ **Causal feature engineering** (no look-ahead bias)
-- ✅ Temporal train/test split (past → future)
-- ✅ Log returns, annualized volatility (√252)
-- ✅ Baseline comparison: Naïve, GARCH, XGBoost
-- ✅ Config-driven pipeline (`config.yaml`)
+### Local Setup (No Docker)
 
-## 📂 Project Structure
-- 📁 data/raw – raw CSV files
-- 📁 notebooks – EDA and model notebooks
-- 📁 src – processing and model code
+```bash
+# Clone repository
+git clone https://github.com/yourname/crypto-volatility
+cd crypto-volatility
 
-## Data Science Pipeline
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-1. Data Loading
-2. Data Cleaning
-3. Feature Engineering
-4. Modeling
-5. Evaluation
-6. Insights/Output
-
-## SQL Feature Extraction (Conceptual)
-
-The following SQL queries illustrate how volatility-related features could be extracted from a relational database before modeling.
-
-# 1. Fetch historical BTC prices
-
-```sql
-SELECT timestamp, close_price
-FROM crypto_prices
-WHERE symbol = 'BTC'
-ORDER BY timestamp;
-
-# 2. Calculate daily returns
-
-```sql
-SELECT
-    timestamp,
-    (close_price - LAG(close_price) OVER (ORDER BY timestamp)) /
-     LAG(close_price) OVER (ORDER BY timestamp) AS daily_return
-FROM crypto_prices
-WHERE symbol = 'BTC';
-
-### 3. Calculate 15-day rolling volatility
-
-```sql
-SELECT
-    timestamp,
-    STDDEV(daily_return) OVER (
-        ORDER BY timestamp
-        ROWS BETWEEN 14 PRECEDING AND CURRENT ROW
-    ) AS rolling_volatility_15d
-FROM (
-    SELECT
-        timestamp,
-        (close_price - LAG(close_price) OVER (ORDER BY timestamp)) /
-         LAG(close_price) OVER (ORDER BY timestamp) AS daily_return
-    FROM crypto_prices
-    WHERE symbol = 'BTC'
-) t;
-
-### 4. Select training data (no future leakage)
-
-```sql
-SELECT *
-FROM crypto_prices
-WHERE symbol = 'BTC'
-AND timestamp <= '2025-11-30';
+# Install dependencies
+pip install -r requirements.txt
 ```
-## Assumptions
 
-- Future price behavior is suitable for statistical forecasting.
-- External events are not explicitly modeled.
+### Download Data
 
+```bash
+python main.py --mode download
+```
 
-## Next Steps
+This downloads 5+ years of daily BTC-USD data from Yahoo Finance and saves to `data/raw_data/raw_data.csv`.
 
-- Try LSTM / RNN for time-series.
-- Add macroeconomic features.
-- Deploy a simple API.
+---
 
-## SQL vs Pandas for Feature Engineering
+## 🚀 Usage
 
-SQL is used for filtering, aggregations, and window-based computations directly on stored data, reducing data transfer and ensuring consistent feature extraction across systems. Pandas is then used for more flexible transformations, exploratory analysis, and modeling workflows once the required features are extracted.
+### Quick Forecast
 
-**Used SQL for:**
-- Filtering historical BTC data by time range
-- Computing daily returns
-- Calculating rolling 15-day volatility
-- Enforcing train/test split without future leakage
+```bash
+python main.py --mode predict
+```
 
-**Used pandas for:**
-- Exploratory data analysis and visualization
-- Feature inspection and validation
-- Model training and evaluation
-
-## Volatility Feature Intuition
-
-Volatility measures the magnitude of price fluctuations rather than direction. It is primarily driven by the size and frequency of returns over time. Features based on historical returns help capture recent market uncertainty and risk.
-
-**Key volatility features:**
-- **Log returns** – capture percentage price changes and normalize scale.
-- **Rolling standard deviation of returns** – measures recent variability in price movements.
-- **High–low price range** – reflects intraday price dispersion and market stress.
-
-**Leakage prevention:**
-All features are computed strictly using historical data up to each timestamp. Rolling statistics are calculated using backward-looking windows only, ensuring that no future information is used in training or evaluation.
-
-## Model Selection Rationale
-
-Multiple models were evaluated to understand how different assumptions and levels of complexity affect volatility forecasting performance. Simple baselines establish reference performance, while more complex models test whether additional structure improves predictive accuracy.
-
-**Models evaluated:**
-- **Naïve volatility model** – serves as a strong baseline by assuming recent volatility persists into the near future.
-- **GARCH** – captures volatility clustering and time-varying variance common in financial time series.
-- **XGBoost** – tests whether nonlinear relationships in engineered features improve volatility prediction.
-
-**Key learning:**
-Model performance showed that simple baselines can outperform more complex models for short-horizon volatility forecasting. This suggests strong persistence in recent volatility and highlights the importance of benchmarking against simple methods before adopting higher-complexity models.
-
-## Evaluation Strategy
-
-RMSE was used to evaluate volatility forecasts because it penalizes larger prediction errors more strongly, which is important in risk-sensitive applications where underestimating or overestimating volatility can have significant consequences.
-Lower RMSE indicates more reliable volatility estimates, which helps traders make better risk management decisions such as position sizing, stop-loss placement, and capital allocation under uncertain market conditions.
-While RMSE provides a clear measure of average forecast error, it does not capture directional bias or tail risk, which are also important considerations in highly volatile markets.
-
-## End-to-End Pipeline Overview
-
-The system ingests historical cryptocurrency price data, performs cleaning and feature engineering to estimate volatility-related signals, applies forecasting models on strictly past data, and evaluates predictions using forward-looking test windows to support risk-aware decision making.
-The volatility forecast would be exposed through a simple API endpoint that returns the predicted 15-day volatility percentage for a given cryptocurrency symbol, allowing downstream applications or dashboards to consume the output programmatically.
-In production, the pipeline would run on a scheduled basis to ingest new market data, update volatility features, and refresh forecasts. The API service could be deployed on a cloud virtual machine or managed platform, with model artifacts and logs stored centrally for monitoring and retraining.
-
-## Cloud Services Mapping
-
-### Azure (Conceptual)
-
-- **Azure Virtual Machines** – Host the API service that serves volatility forecasts.
-- **Azure Blob Storage** – Store historical price data, model artifacts, and logs.
-- **Azure Logic Apps / Scheduled Jobs** – Trigger periodic data ingestion and model updates.
-The system design is cloud-agnostic, allowing the same pipeline and services to be deployed on either AWS or Azure with minimal changes.
+Output:
