@@ -97,6 +97,7 @@
 
         <footer>
             Built with Flask • yfinance • Chart.js • Naïve Persistence Baseline
+            • <a href="/about" style="color:var(--primary);text-decoration:none;">How It Works</a>
         </footer>
     </div>
 
@@ -104,6 +105,20 @@
         const API_BASE = '';
         let chartInstance = null;
         let selectedHorizon = 15;
+
+        // ✅ Safe number formatter - prevents toLocaleString crash
+        function formatNumber(value, decimals = 2) {
+            const num = Number(value);
+            if (isNaN(num) || !isFinite(num)) return 'N/A';
+            return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+
+        // ✅ Safe price formatter with $ prefix
+        function formatPrice(value) {
+            const num = Number(value);
+            if (isNaN(num) || !isFinite(num)) return '$0.00';
+            return '$' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
 
         // Horizon buttons
         document.querySelectorAll('.horizon-btn').forEach(btn => {
@@ -133,10 +148,20 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ coins: [coin], horizon: selectedHorizon })
                 });
+                
+                if (!forecastRes.ok) {
+                    const errText = await forecastRes.text();
+                    throw new Error(`API error ${forecastRes.status}: ${errText}`);
+                }
+                
                 const forecastData = await forecastRes.json();
                 
-                if (forecastData.status !== 'success' || !forecastData.forecasts[coin]?.success) {
-                    throw new Error(forecastData.forecasts[coin]?.error || 'Forecast failed');
+                // ✅ Validate response structure
+                if (forecastData?.status !== 'success' || !forecastData?.forecasts?.[coin]?.success) {
+                    const errorMsg = forecastData?.forecasts?.[coin]?.error || 
+                                    forecastData?.message || 
+                                    'Forecast failed - check server logs';
+                    throw new Error(errorMsg);
                 }
 
                 // 2. Fetch Chart Data
@@ -145,14 +170,19 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ coin, days: 120 })
                 });
+                
+                if (!chartRes.ok) throw new Error(`Chart API error ${chartRes.status}`);
+                
                 const chartData = await chartRes.json();
-                if (chartData.error) throw new Error(chartData.error);
+                if (chartData?.error) throw new Error(chartData.error);
 
                 renderResults(forecastData.forecasts[coin]);
                 renderChart(chartData.data, coin);
                 results.classList.add('visible');
+                
             } catch (err) {
-                errorBox.textContent = `❌ ${err.message}`;
+                console.error('Forecast error:', err);
+                errorBox.textContent = `❌ ${err.message || 'Unknown error'}`;
                 errorBox.classList.add('visible');
             } finally {
                 loading.classList.remove('visible');
@@ -162,31 +192,54 @@
 
         function renderResults(forecast) {
             const grid = document.getElementById('metrics-grid');
-            const riskClass = `risk-${forecast.risk_level}`;
+            
+            // ✅ Defensive property access with fallbacks
+            const forecastVol = forecast?.forecast_vol ?? 0;
+            const currentVol = forecast?.current_vol ?? 0;
+            const trend = forecast?.trend ?? 'unknown';
+            const riskLevel = forecast?.risk_level ?? 'unknown';
+            const latestPrice = forecast?.latest_price ?? 0;
+            const latestDate = forecast?.latest_date ?? 'N/A';
+            const method = forecast?.method ?? 'unknown';
+            
+            const riskClass = `risk-${riskLevel}`;
+            
             grid.innerHTML = `
                 <div class="metric-card ${riskClass}">
                     <div class="metric-label">Forecasted Volatility</div>
-                    <div class="metric-value">${forecast.forecast_vol}%</div>
+                    <div class="metric-value">${formatNumber(forecastVol)}%</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Current Volatility</div>
-                    <div class="metric-value">${forecast.current_vol}%</div>
+                    <div class="metric-value">${formatNumber(currentVol)}%</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Trend</div>
-                    <div class="metric-value"><span class="badge ${forecast.trend}">${forecast.trend.toUpperCase()}</span></div>
+                    <div class="metric-value">
+                        <span class="badge ${trend === 'up' ? 'increasing' : trend === 'down' ? 'decreasing' : 'stable'}">
+                            ${trend.toUpperCase()}
+                        </span>
+                    </div>
                 </div>
                 <div class="metric-card ${riskClass}">
                     <div class="metric-label">Risk Level</div>
-                    <div class="metric-value" style="text-transform: capitalize;">${forecast.risk_level.replace('_', ' ')}</div>
+                    <div class="metric-value" style="text-transform: capitalize;">
+                        ${riskLevel.replace('_', ' ')}
+                    </div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Latest Price</div>
-                    <div class="metric-value">$${forecast.latest_price.toLocaleString()}</div>
+                    <div class="metric-value">${formatPrice(latestPrice)}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Forecast Date</div>
-                    <div class="metric-value">${forecast.latest_date}</div>
+                    <div class="metric-value">${latestDate}</div>
+                </div>
+                <div class="metric-card" style="grid-column: span 2;">
+                    <div class="metric-label">Prediction Method</div>
+                    <div class="metric-value" style="font-size:1em;color:#666;">
+                        ${method === 'ml' ? '🤖 ML Model' : method === 'statistical' ? '📐 Rolling Volatility' : '❓ Unknown'}
+                    </div>
                 </div>
             `;
         }
@@ -195,14 +248,19 @@
             const ctx = document.getElementById('volatilityChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
 
+            // ✅ Safe array slicing with fallbacks
+            const dates = data?.dates?.slice(-60) || [];
+            const prices = data?.prices?.slice(-60) || [];
+            const volatility = data?.volatility?.slice(-60) || [];
+
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.dates.slice(-60),
+                    labels: dates,
                     datasets: [
                         {
                             label: `${coin} Price ($)`,
-                            data: data.prices.slice(-60),
+                            data: prices,
                             borderColor: '#667eea',
                             backgroundColor: 'rgba(102, 126, 234, 0.1)',
                             yAxisID: 'y',
@@ -211,7 +269,7 @@
                         },
                         {
                             label: 'Annualized Volatility (%)',
-                            data: data.volatility.slice(-60),
+                            data: volatility,
                             borderColor: '#dc3545',
                             borderDash: [5, 5],
                             yAxisID: 'y1',
@@ -225,13 +283,46 @@
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
-                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Price ($)' } },
-                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Volatility (%)' }, grid: { drawOnChartArea: false } }
+                        y: { 
+                            type: 'linear', 
+                            display: true, 
+                            position: 'left', 
+                            title: { display: true, text: 'Price ($)' },
+                            beginAtZero: false
+                        },
+                        y1: { 
+                            type: 'linear', 
+                            display: true, 
+                            position: 'right', 
+                            title: { display: true, text: 'Volatility (%)' }, 
+                            grid: { drawOnChartArea: false },
+                            beginAtZero: true
+                        }
                     },
-                    plugins: { legend: { position: 'top' } }
+                    plugins: { 
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
+
+        // ✅ Auto-load BTC forecast on page load (optional)
+        window.addEventListener('DOMContentLoaded', () => {
+            // Uncomment below to auto-predict on load:
+            // document.getElementById('predict-btn').click();
+        });
     </script>
 </body>
 </html>

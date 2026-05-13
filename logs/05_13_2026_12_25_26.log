@@ -1,0 +1,33 @@
+2026-05-13-12:25:34 - 50 - root - INFO - Data downloaded and saved successfully
+2026-05-13-12:25:34 - 87 - root - INFO - Initiating feature engineering
+2026-05-13-12:25:35 - 50 - root - INFO - Data downloaded and saved successfully
+2026-05-13-12:25:35 - 21 - root - INFO - \u2705 Loaded 2187 rows from data/raw_data/raw_data.csv
+2026-05-13-12:25:35 - 44 - root - INFO - Computing log returns
+2026-05-13-12:25:35 - 50 - root - INFO - Log return preview:
+                                 Close  log_return
+Date                                              
+2020-01-01 00:00:00+00:00  7200.174316         NaN
+2020-01-02 00:00:00+00:00  6985.470215   -0.030273
+2020-01-03 00:00:00+00:00  7344.884277    0.050172
+2020-01-04 00:00:00+00:00  7410.656738    0.008915
+2020-01-05 00:00:00+00:00  7411.317383    0.000089
+2026-05-13-12:25:35 - 54 - root - INFO - Log returns computed successfully
+2026-05-13-12:25:35 - 60 - root - INFO - computing target volatility
+2026-05-13-12:25:35 - 66 - root - INFO - Creating lagged features
+2026-05-13-12:25:35 - 78 - root - INFO - Lagged features created successfully
+2026-05-13-12:25:35 - 87 - root - INFO - Initiating feature engineering
+2026-05-13-12:25:35 - 50 - root - INFO - Data downloaded and saved successfully
+2026-05-13-12:25:35 - 21 - root - INFO - \u2705 Loaded 2187 rows from data/raw_data/raw_data.csv
+2026-05-13-12:25:35 - 44 - root - INFO - Computing log returns
+2026-05-13-12:25:35 - 50 - root - INFO - Log return preview:
+                                 Close  log_return
+Date                                              
+2020-01-01 00:00:00+00:00  7200.174316         NaN
+2020-01-02 00:00:00+00:00  6985.470215   -0.030273
+2020-01-03 00:00:00+00:00  7344.884277    0.050172
+2020-01-04 00:00:00+00:00  7410.656738    0.008915
+2020-01-05 00:00:00+00:00  7411.317383    0.000089
+2026-05-13-12:25:35 - 54 - root - INFO - Log returns computed successfully
+2026-05-13-12:25:35 - 60 - root - INFO - computing target volatility
+2026-05-13-12:25:35 - 66 - root - INFO - Creating lagged features
+2026-05-13-12:25:35 - 78 - root - INFO - Lagged features created successfully
