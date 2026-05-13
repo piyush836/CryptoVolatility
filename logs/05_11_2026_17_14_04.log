@@ -1,4 +1,0 @@
-2026-05-11-17:14:09 - 97 - werkzeug - WARNING -  * Debugger is active!
-2026-05-11-17:14:09 - 97 - werkzeug - INFO -  * Debugger PIN: 121-249-646
-2026-05-11-17:14:23 - 97 - werkzeug - INFO - 127.0.0.1 - - [11/May/2026 17:14:23] "POST /api/forecast HTTP/1.1" 200 -
-2026-05-11-17:16:01 - 97 - werkzeug - INFO -  * Detected change in 'E:\\CryptoVolatility\\src\\advanced_app.py', reloading
